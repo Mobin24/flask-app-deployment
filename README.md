@@ -34,7 +34,6 @@ flask-app-ecs/
 ├── templates/
 │   └── index.html         # Landing page
 ├── Dockerfile             # Simple single-stage build
-└── Dockerfile-multi       # Multistage build with distroless
 ```
 
 ## Quick Start

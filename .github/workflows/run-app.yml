@@ -7,11 +7,34 @@ jobs:
   deploy:
     runs-on: self-hosted
     steps:
-      - name: Code Checkout
-        uses: actions/checkout@v4
+      - name: Install Docker (only if missing)
+        run: |
+          if ! command -v docker > /dev/null; then
+            sudo apt-get update
+            sudo apt-get install docker.io -y
+          fi
 
-      - name: Install Docker
-        run: sudo apt-get update && sudo apt-get install docker.io -y
+      - name: Pull latest image
+        run: docker pull mobin24/flask-app-ecs:latest
 
-      - name: Run Docker image
-        run: echo "Docker running"
+      - name: Stop and remove old container
+        run: |
+          docker stop flask-app || true
+          docker rm flask-app || true
+
+      - name: Run new container
+        run: |
+          docker run -d \
+            --name flask-app \
+            --restart unless-stopped \
+            -p 80:80 \
+            mobin24/flask-app-ecs:latest
+
+      - name: Check app is responding
+        run: |
+          sleep 5
+          docker ps --filter "name=flask-app"
+          curl -f http://localhost:80/ || (docker logs flask-app && exit 1)
+
+      - name: Clean up old images
+        run: docker image prune -f
